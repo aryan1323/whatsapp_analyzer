@@ -1,4 +1,3 @@
-// enhanced_upload_chat.js
 import axios from 'axios';
 import './UploadChat.css';
 import { useState, useEffect } from 'react';
@@ -23,8 +22,7 @@ export default function UploadChat() {
   const [recommendationText, setRecommendationText] = useState('');
   const [recStatus, setRecStatus] = useState(null);
 
-  // Rotating loading messages...
-  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  // Rotating loading messages
   const loadingMessages = [
     'Analyzing every message',
     'Reading your chat history',
@@ -37,6 +35,7 @@ export default function UploadChat() {
     'Building word clouds',
     'Preparing insights for you',
   ];
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   useEffect(() => {
     if (!loading) return;
     const interval = setInterval(() => {
@@ -45,12 +44,12 @@ export default function UploadChat() {
     return () => clearInterval(interval);
   }, [loading]);
 
+  // Drag-and-drop handlers
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(['dragenter', 'dragover'].includes(e.type));
   };
-
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -58,12 +57,15 @@ export default function UploadChat() {
     if (e.dataTransfer.files[0]) uploadChat(e.dataTransfer.files[0]);
   };
 
+  // File-selection handler
   const handleFileChange = (e) => {
     const f = e.target.files[0];
     if (f) uploadChat(f);
   };
 
+  // Upload and initial analysis
   const uploadChat = async (f) => {
+    setFile(f);
     setLoading(true);
     setError(null);
     setUsers([]);
@@ -71,6 +73,7 @@ export default function UploadChat() {
     setCharts([]);
     setSelectedCharts(new Set());
     setSummary(null);
+
     try {
       const fd = new FormData();
       fd.append('file', f);
@@ -88,12 +91,14 @@ export default function UploadChat() {
     }
   };
 
+  // User filter handler
   const handleUserChange = async (e) => {
     const u = e.target.value;
     setSelectedUser(u);
     setLoading(true);
     setError(null);
     setSummary(null);
+
     try {
       const url = u
         ? `${API_URL}/stats?sender=${encodeURIComponent(u)}`
@@ -109,6 +114,7 @@ export default function UploadChat() {
     }
   };
 
+  // Summarize date range
   const summarizeRange = async () => {
     if (!fromDate || !toDate) return;
     setLoading(true);
@@ -124,13 +130,14 @@ export default function UploadChat() {
     }
   };
 
+  // Send recommendation via email
   const sendRecommendation = async () => {
     if (!recommendationText.trim()) {
       setRecStatus('Please enter a recommendation.');
       return;
     }
+    setRecStatus('Sending...');
     try {
-      setRecStatus('Sending...');
       await axios.post(`${API_URL}/recommendations`, { text: recommendationText });
       setRecStatus('Recommendation sent. Thank you!');
       setRecommendationText('');
@@ -139,21 +146,23 @@ export default function UploadChat() {
     }
   };
 
+  // Reset all state for a new analysis
   const resetAnalysis = () => {
     setFile(null);
     setUsers([]);
     setSelectedUser('');
-    setCharts([]);
     setStats(null);
-    setError(null);
+    setCharts([]);
     setSelectedCharts(new Set());
     setSummary(null);
     setFromDate('');
     setToDate('');
     setRecommendationText('');
     setRecStatus(null);
+    setError(null);
   };
 
+  // Chart selection toggles
   const toggleChartSelection = (id) => {
     const newSel = new Set(selectedCharts);
     newSel.has(id) ? newSel.delete(id) : newSel.add(id);
@@ -167,6 +176,25 @@ export default function UploadChat() {
 
   return (
     <div className="chat-analyzer-dark">
+      {!users.length && (
+        <div className="instructions-box" aria-label="Instructions to download WhatsApp chat file">
+          <h2>How to Download WhatsApp Chat File</h2>
+          <strong>Android:</strong>
+          <ol>
+            <li>Open WhatsApp chat, tap three dots → More → Export chat.</li>
+            <li>Choose "Without Media" or "Include Media".</li>
+            <li>Save or email the exported .txt file to your device.</li>
+          </ol>
+          <strong>iOS:</strong>
+          <ol>
+            <li>Open WhatsApp chat, tap contact name → Export Chat.</li>
+            <li>Select "Attach Media" or "Without Media".</li>
+            <li>Save or share the .txt chat file to your device.</li>
+          </ol>
+          <p>Upload the downloaded chat file here to analyze your conversations.</p>
+        </div>
+      )}
+
       {loading && (
         <div className="loading-overlay" aria-live="polite" aria-busy="true" role="alert">
           <div className="loading-content">
@@ -215,12 +243,11 @@ export default function UploadChat() {
                   <select value={selectedUser} onChange={handleUserChange} disabled={loading}>
                     <option value="">All Users</option>
                     {users.map(u => (
-                      <option key={u} value={u}>
-                        {u}
-                      </option>
+                      <option key={u} value={u}>{u}</option>
                     ))}
                   </select>
                 </label>
+
                 <fieldset className="chart-checkboxes">
                   <legend>📊 Select Charts:</legend>
                   <label>
@@ -235,8 +262,7 @@ export default function UploadChat() {
                           value={id}
                           checked={selectedCharts.has(id)}
                           onChange={() => toggleChartSelection(id)}
-                        />{' '}
-                        {c.title}
+                        /> {c.title}
                       </label>
                     );
                   })}
@@ -248,7 +274,7 @@ export default function UploadChat() {
                     <input
                       type="date"
                       value={fromDate}
-                      onChange={(e) => setFromDate(e.target.value)}
+                      onChange={e => setFromDate(e.target.value)}
                       disabled={loading}
                     />
                   </label>
@@ -257,7 +283,7 @@ export default function UploadChat() {
                     <input
                       type="date"
                       value={toDate}
-                      onChange={(e) => setToDate(e.target.value)}
+                      onChange={e => setToDate(e.target.value)}
                       disabled={loading}
                     />
                   </label>
@@ -315,18 +341,10 @@ export default function UploadChat() {
           {summary && (
             <div className="summary-dark" style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#2a2c37', borderRadius: '6px' }}>
               <h3>Summary ({fromDate} – {toDate})</h3>
-              <p>
-                <strong>Total Messages:</strong> {summary.total_messages}
-              </p>
-              <p>
-                <strong>Top Sender:</strong> {summary.top_sender} ({summary.top_sender_count} messages)
-              </p>
-              <p>
-                <strong>Most Active Hour:</strong> {summary.most_active_hour}:00
-              </p>
-              <p>
-                <strong>Top Words:</strong> {summary.top_words.join(', ')}
-              </p>
+              <p><strong>Total Messages:</strong> {summary.total_messages}</p>
+              <p><strong>Top Sender:</strong> {summary.top_sender} ({summary.top_sender_count} messages)</p>
+              <p><strong>Most Active Hour:</strong> {summary.most_active_hour}:00</p>
+              <p><strong>Top Words:</strong> {summary.top_words.join(', ')}</p>
             </div>
           )}
 
