@@ -1,6 +1,4 @@
-/* UploadChat.css */
 
-/* Overall dark theme background and font */
 .chat-analyzer-dark {
   background-color: #1e1f29;
   color: #e6e8ec;
@@ -315,7 +313,7 @@ textarea {
 /* Chart gallery */
 .charts-dark {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+ grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
 }
 
