@@ -1,11 +1,13 @@
+
 import axios from 'axios';
 import './UploadChat.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 const API_URL = 'https://aryan-whatsapp-2.onrender.com';  // Set your backend API base URL here
 
 export default function UploadChat() {
   const [users, setUsers] = useState([]);
+  const [userSearch, setUserSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState('');
   const [charts, setCharts] = useState([]);
   const [selectedCharts, setSelectedCharts] = useState(new Set());
@@ -44,6 +46,13 @@ export default function UploadChat() {
     return () => clearInterval(interval);
   }, [loading]);
 
+  // Filtered users based on userSearch (case-insensitive)
+  const filteredUsers = useMemo(() => {
+    if (!userSearch.trim()) return users;
+    const lowerFilter = userSearch.toLowerCase();
+    return users.filter((u) => u.toLowerCase().includes(lowerFilter));
+  }, [users, userSearch]);
+
   // Drag-and-drop handlers
   const handleDrag = (e) => {
     e.preventDefault();
@@ -73,13 +82,14 @@ export default function UploadChat() {
     setCharts([]);
     setSelectedCharts(new Set());
     setSummary(null);
+    setSelectedUser('');
+    setUserSearch('');
 
     try {
       const fd = new FormData();
       fd.append('file', f);
       const uRes = await axios.post(`${API_URL}/analyze`, fd);
       setUsers(uRes.data.users);
-      setSelectedUser('');
       const sRes = await axios.get(`${API_URL}/stats`);
       setStats(sRes.data.stats);
       setCharts(sRes.data.charts);
@@ -151,6 +161,7 @@ export default function UploadChat() {
     setFile(null);
     setUsers([]);
     setSelectedUser('');
+    setUserSearch('');
     setStats(null);
     setCharts([]);
     setSelectedCharts(new Set());
@@ -238,11 +249,39 @@ export default function UploadChat() {
           ) : (
             <>
               <div className="selectors">
+
+                {/* User search input */}
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#c6c8d1' }}>
+                  🔍 Search User:
+                  <input
+                    type="text"
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    placeholder="Type to filter users..."
+                    style={{
+                      marginLeft: '0.5rem',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '4px',
+                      border: '1px solid #444',
+                      backgroundColor: '#1e1f29',
+                      color: '#e6e8ec',
+                      width: 'calc(100% - 100px)',
+                    }}
+                    disabled={loading}
+                  />
+                </label>
+
+                {/* User select dropdown, filtered by search */}
                 <label>
                   👤 Analyze for:
-                  <select value={selectedUser} onChange={handleUserChange} disabled={loading}>
+                  <select
+                    value={selectedUser}
+                    onChange={handleUserChange}
+                    disabled={loading}
+                    style={{ marginLeft: '0.5rem' }}
+                  >
                     <option value="">All Users</option>
-                    {users.map(u => (
+                    {filteredUsers.map((u) => (
                       <option key={u} value={u}>{u}</option>
                     ))}
                   </select>
