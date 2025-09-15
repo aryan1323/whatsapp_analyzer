@@ -3,7 +3,7 @@ import axios from 'axios';
 import './UploadChat.css';
 import { useState, useEffect } from 'react';
 
-const API_URL = 'http://127.0.0.1:5000';  // Set your backend API base URL here
+const API_URL = 'https://aryan-whatsapp-2.onrender.com';  // Set your backend API base URL here
 
 export default function UploadChat() {
   const [users, setUsers] = useState([]);
